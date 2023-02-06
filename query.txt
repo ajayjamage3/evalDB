@@ -1,0 +1,26 @@
+1) Create an index on the user_id field in the purchases collection to improve the performance of your queries.
+=>  db.purchases.createIndex({user_id:1})
+
+2)Use the $lookup operator in an aggregation pipeline to join the users and purchases collections, and return a new documents that contains the name and age of each user, along with their purchases.
+=>db.users.aggregate([{$lookup:{from:"purchases",localField:"_id",foreignField:"user_id",as:"purchases"}}])
+
+3)Use the $group operator in an aggregation pipeline to calculate the total number of purchases and total spending for each user. 
+=> db.users.aggregate([{$lookup:{from:"purchases",localField:"_id",foreignField:"user_id",as:"purchases"}},{$addFields:{"total_purchases":{$size:"$purchases"}}},{$addFields:{"total_spending":{$sum:"$purchases.price"}}},{$project:{"purchases":0,age:0}}])
+
+4)Use the $sort operator to sort the output documents by total spending in descending order.
+=> db.users.aggregate([{$lookup:{from:"purchases",localField:"_id",foreignField:"user_id",as:"purchases"}},{$addFields:{"total_purchases":{$size:"$purchases"}}},{$addFields:{"total_spending":{$sum:"$purchases.price"}}},{$project:{"purchases":0,age:0}}]).sort({"total_spending":-1})
+
+5)Cross check the total_purchases and total_spending, if it is correct, by adding more purchases in the purchases collection and running your aggregation pipeline again.
+before adding output = [
+  { _id: 3, name: 'Charlie', total_purchases: 2, total_spending: 27 },
+  { _id: 2, name: 'Bob', total_purchases: 2, total_spending: 21 },
+  { _id: 1, name: 'Alice', total_purchases: 2, total_spending: 15 }
+]
+
+added=  db.purchases.insertMany([{ "_id": 8, "user_id": 3, "item": "book", "price": 30 }])
+
+after adding output = [
+  { _id: 3, name: 'Charlie', total_purchases: 3, total_spending: 57 },
+  { _id: 2, name: 'Bob', total_purchases: 2, total_spending: 21 },
+  { _id: 1, name: 'Alice', total_purchases: 2, total_spending: 15 }
+]
